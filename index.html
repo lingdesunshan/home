@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的个人主页</title>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+
+    <style>
+        /* --- 基础重置与字体 --- */
+        :root {
+            --bg-color: #ffffff;
+            --text-primary: #111111;
+            --text-secondary: #666666;
+            --accent-color: #000000;
+            --hover-bg: #f5f5f5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* --- 布局容器 --- */
+        #app {
+            max-width: 640px; /* 限制最大宽度，保持极简阅读感 */
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        /* --- 头部区域 --- */
+        .header {
+            margin-bottom: 40px;
+        }
+        
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #eee; /* 占位色 */
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+
+        .name {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+        }
+
+        .bio {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin: 0;
+            white-space: pre-line; /* 允许简介换行 */
+        }
+
+        /* --- 社交链接图标 --- */
+        .social-links {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .social-icon {
+            color: var(--text-secondary);
+            font-size: 20px;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .social-icon:hover {
+            color: var(--text-primary);
+        }
+
+        /* --- 内容区块通用样式 --- */
+        .section {
+            margin-top: 50px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #999;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* --- 项目/文章列表 --- */
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .item-link {
+            display: block;
+            text-decoration: none;
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+            transition: opacity 0.2s;
+        }
+
+        .item-link:last-child {
+            border-bottom: none;
+        }
+
+        .item-link:hover .item-title {
+            text-decoration: underline; /* 复古链接样式 */
+            text-underline-offset: 4px;
+        }
+
+        .item-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .arrow {
+            opacity: 0;
+            transform: translateX(-5px);
+            transition: all 0.2s;
+        }
+
+        .item-link:hover .arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* --- 底部 --- */
+        .footer {
+            margin-top: 80px;
+            font-size: 12px;
+            color: #ccc;
+            text-align: center;
+        }
+
+        /* 移动端微调 */
+        @media (max-width: 600px) {
+            #app { padding-top: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <header class="header">
+        <img :src="profile.avatarUrl" alt="Avatar" class="avatar" v-if="profile.avatarUrl">
+        
+        <h1 class="name">{{ profile.name }}</h1>
+        <p class="bio">{{ profile.bio }}</p>
+
+        <div class="social-links">
+            <a v-for="link in socialLinks" :key="link.name" :href="link.url" target="_blank" class="social-icon" :title="link.name">
+                <i :class="link.iconClass"></i>
+            </a>
+        </div>
+    </header>
+
+    <section class="section">
+        <div class="section-title">Projects / 精选项目</div>
+        <div class="item-list">
+            <a v-for="project in projects" :key="project.title" :href="project.url" target="_blank" class="item-link">
+                <div class="item-title">
+                    {{ project.title }}
+                    <span class="arrow">→</span>
+                </div>
+                <div class="item-desc">{{ project.desc }}</div>
+            </a>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section-title">Writings / 随笔</div>
+        <div class="item-list">
+            <a v-for="post in posts" :key="post.title" :href="post.url" class="item-link">
+                <div class="item-title">
+                    {{ post.title }}
+                    <span style="font-size: 12px; color: #999; font-weight: normal;">{{ post.date }}</span>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <footer class="footer">
+        © {{ new Date().getFullYear() }} {{ profile.name }}. All rights reserved.
+    </footer>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            // ---在此处修改您的个人信息---
+            profile: {
+                name: "Your Name",
+                // 建议使用 200x200 的正方形图片
+                avatarUrl: "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff&size=128", 
+                bio: "软件架构师 / 独立开发者 / 终身学习者\n这里是我记录想法和分享作品的地方。"
+            },
+            
+            // ---社交链接 (使用 RemixIcon 类名)---
+            socialLinks: [
+                { name: 'Twitter', url: 'https://twitter.com', iconClass: 'ri-twitter-x-line' },
+                { name: 'GitHub', url: 'https://github.com', iconClass: 'ri-github-line' },
+                { name: 'Email', url: 'mailto:your@email.com', iconClass: 'ri-mail-line' }
+            ],
+
+            // ---项目列表---
+            projects: [
+                { 
+                    title: "公共安全态势感知平台", 
+                    desc: "基于 Vue 和 WebGL 的大数据可视化指挥系统", 
+                    url: "#" 
+                },
+                { 
+                    title: "Forestry Command", 
+                    desc: "林业局指挥调度大屏系统设计", 
+                    url: "#" 
+                },
+                { 
+                    title: "Kids Education Audio", 
+                    desc: "给孩子们的商业与科学启蒙音频内容", 
+                    url: "#" 
+                }
+            ],
+
+            // ---文章列表---
+            posts: [
+                { title: "如何向孩子解释什么是商业模式？", date: "2025-12-03", url: "#" },
+                { title: "Vue 2 在 2025 年的实战应用", date: "2025-11-20", url: "#" },
+                { title: "关于极简主义设计的思考", date: "2025-01-15", url: "#" }
+            ]
+        }
+    })
+</script>
+
+</body>
+</html>
