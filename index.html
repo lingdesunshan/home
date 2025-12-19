@@ -2,250 +2,310 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的个人主页</title>
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Co-Op Mode | Father & Kids</title>
+    <link href="https://lib.baomitu.com/remixicon/3.5.0/remixicon.css" rel="stylesheet">
+    <script src="https://lib.baomitu.com/vue/2.6.14/vue.min.js"></script>
 
     <style>
-        /* --- 基础重置与字体 --- */
         :root {
-            --bg-color: #ffffff;
-            --text-primary: #111111;
-            --text-secondary: #666666;
-            --accent-color: #000000;
-            --hover-bg: #f5f5f5;
+            --bg-body: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-main: #2d3748;
+            --text-sub: #718096;
+            --primary: #2563eb;
+            --success: #10b981;
+            --border: #e2e8f0;
+            --radius: 16px;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             margin: 0;
             padding: 0;
             line-height: 1.6;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* --- 布局容器 --- */
         #app {
-            max-width: 640px; /* 限制最大宽度，保持极简阅读感 */
+            max-width: 900px;
             margin: 0 auto;
-            padding: 60px 24px;
+            padding: 40px 20px;
+            min-height: 100vh;
         }
 
-        /* --- 头部区域 --- */
-        .header {
-            margin-bottom: 40px;
+        a { text-decoration: none; color: inherit; }
+        button { outline: none; -webkit-tap-highlight-color: transparent; }
+
+        /* --- 头部 --- */
+        .header { text-align: center; margin-bottom: 40px; }
+        .site-title { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+        .site-desc { color: var(--text-sub); }
+
+        /* --- 导航 Tab --- */
+        .nav-tabs {
+            display: flex; justify-content: center; gap: 8px; margin-bottom: 40px;
+            background: #fff; padding: 6px; border-radius: 50px;
+            width: fit-content; margin-left: auto; margin-right: auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); flex-wrap: wrap;
+        }
+        .tab-btn {
+            border: none; background: none; padding: 10px 24px; border-radius: 40px;
+            font-size: 14px; font-weight: 600; color: var(--text-sub);
+            cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px;
+        }
+        .tab-btn.active { background: var(--text-main); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+        /* --- 内容区域动画 --- */
+        .content-section { display: none; animation: fadeIn 0.4s ease; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ================= 资源库样式 ================= */
+        .resource-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;
+        }
+        .resource-card {
+            background: #fff; border-radius: var(--radius); padding: 24px;
+            text-align: center; border: 1px solid var(--border);
+            transition: transform 0.2s, border-color 0.2s;
+            display: block; cursor: pointer; position: relative;
+        }
+        .resource-card:hover { transform: translateY(-4px); border-color: var(--primary); }
+        /* 给内部应用加个小角标 */
+        .app-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: #e0f2fe; color: #0284c7; font-size: 10px; 
+            padding: 2px 6px; border-radius: 4px; font-weight: bold;
         }
         
-        .avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: #eee; /* 占位色 */
-            object-fit: cover;
-            margin-bottom: 20px;
+        .res-icon { font-size: 32px; margin-bottom: 12px; display: block; }
+        .res-title { font-weight: 700; margin-bottom: 6px; display: block; }
+        .res-desc { font-size: 12px; color: var(--text-sub); display: block; margin-bottom: 8px;}
+        .tag-badge { 
+            display: inline-block; font-size: 10px; padding: 2px 8px; 
+            border-radius: 10px; background: #f1f5f9; color: #64748b; font-weight: 600;
         }
 
-        .name {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0 0 8px 0;
+        /* ================= 陪伴清单样式 ================= */
+        .filter-bar { display: flex; gap: 12px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 8px; }
+        .filter-chip {
+            padding: 6px 16px; border: 1px solid var(--border); border-radius: 20px;
+            font-size: 13px; color: var(--text-sub); cursor: pointer; background: #fff;
+            white-space: nowrap; transition: all 0.2s;
         }
+        .filter-chip.active { border-color: var(--success); color: var(--success); background: #ecfdf5; font-weight: 600; }
 
-        .bio {
-            color: var(--text-secondary);
-            font-size: 16px;
-            margin: 0;
-            white-space: pre-line; /* 允许简介换行 */
+        .achievement-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .achievement-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px; display: flex; align-items: flex-start; gap: 12px;
+            transition: all 0.2s; position: relative; overflow: hidden;
         }
+        .achievement-card.done { border-color: var(--success); background: #f0fdf4; }
+        .achievement-card.locked { opacity: 0.6; background: #f9f9f9; }
 
-        /* --- 社交链接图标 --- */
-        .social-links {
-            display: flex;
-            gap: 16px;
-            margin-top: 20px;
+        .check-box {
+            width: 24px; height: 24px; border-radius: 6px; border: 2px solid #cbd5e0;
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+            color: white; margin-top: 2px; transition: all 0.2s;
         }
+        .done .check-box { background: var(--success); border-color: var(--success); }
 
-        .social-icon {
-            color: var(--text-secondary);
-            font-size: 20px;
-            text-decoration: none;
-            transition: color 0.2s;
+        .task-content { flex-grow: 1; }
+        .task-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        .task-meta { font-size: 12px; color: var(--text-sub); display: flex; gap: 8px; flex-wrap: wrap; }
+        .memory-link { font-size: 12px; color: var(--primary); text-decoration: underline; margin-top: 6px; display: inline-block; }
+
+        /* ================= 博客列表样式 ================= */
+        .post-card {
+            background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border);
+            margin-bottom: 16px; transition: border-color 0.2s; display: block;
         }
+        .post-card:hover { border-color: var(--text-main); }
+        .post-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 6px; display: block;}
+        .post-meta { font-size: 12px; color: var(--text-sub); margin-bottom: 8px; display: block;}
+        .post-summary { font-size: 14px; color: #4a5568; margin: 0; }
 
-        .social-icon:hover {
-            color: var(--text-primary);
+        /* ================= 应用弹窗 (Iframe Modal) ================= */
+        .app-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 1000;
+            display: flex; flex-direction: column;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* --- 内容区块通用样式 --- */
-        .section {
-            margin-top: 50px;
+        .app-header {
+            height: 50px; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; border-bottom: 1px solid #eee; background: #fff;
         }
-
-        .section-title {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #999;
-            margin-bottom: 20px;
-            font-weight: 600;
+        .close-app-btn {
+            background: #f1f3f5; border: none; width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer;
         }
-
-        /* --- 项目/文章列表 --- */
-        .item-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .item-link {
-            display: block;
-            text-decoration: none;
-            padding: 16px 0;
-            border-bottom: 1px solid #eee;
-            transition: opacity 0.2s;
-        }
-
-        .item-link:last-child {
-            border-bottom: none;
-        }
-
-        .item-link:hover .item-title {
-            text-decoration: underline; /* 复古链接样式 */
-            text-underline-offset: 4px;
-        }
-
-        .item-title {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .item-desc {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-
-        .arrow {
-            opacity: 0;
-            transform: translateX(-5px);
-            transition: all 0.2s;
-        }
-
-        .item-link:hover .arrow {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        /* --- 底部 --- */
-        .footer {
-            margin-top: 80px;
-            font-size: 12px;
-            color: #ccc;
-            text-align: center;
+        .app-iframe {
+            flex: 1; width: 100%; border: none; background: #fff;
         }
 
         /* 移动端微调 */
         @media (max-width: 600px) {
-            #app { padding-top: 40px; }
+            .site-title { font-size: 26px; }
+            .nav-tabs { width: 100%; gap: 4px; }
+            .tab-btn { padding: 8px 16px; font-size: 13px; }
         }
+
     </style>
 </head>
 <body>
 
 <div id="app">
+    
     <header class="header">
-        <img :src="profile.avatarUrl" alt="Avatar" class="avatar" v-if="profile.avatarUrl">
-        
-        <h1 class="name">{{ profile.name }}</h1>
-        <p class="bio">{{ profile.bio }}</p>
-
-        <div class="social-links">
-            <a v-for="link in socialLinks" :key="link.name" :href="link.url" target="_blank" class="social-icon" :title="link.name">
-                <i :class="link.iconClass"></i>
-            </a>
-        </div>
+        <div class="site-title">Co-Op Mode <span style="font-weight:300; font-size:18px; color:#999; display:block; margin-top:4px;">// 玩家: 爸爸 & 孩子</span></div>
+        <p class="site-desc">Tools, Memories, and the Code of Growing Up.</p>
     </header>
 
-    <section class="section">
-        <div class="section-title">Projects / 精选项目</div>
-        <div class="item-list">
-            <a v-for="project in projects" :key="project.title" :href="project.url" target="_blank" class="item-link">
-                <div class="item-title">
-                    {{ project.title }}
-                    <span class="arrow">→</span>
-                </div>
-                <div class="item-desc">{{ project.desc }}</div>
-            </a>
-        </div>
-    </section>
+    <nav class="nav-tabs">
+        <button class="tab-btn" :class="{active: currentTab === 'resources'}" @click="currentTab = 'resources'">
+            <i class="ri-tools-line"></i> 工具库
+        </button>
+        <button class="tab-btn" :class="{active: currentTab === 'bucketlist'}" @click="currentTab = 'bucketlist'">
+            <i class="ri-flag-2-line"></i> 陪伴成就 ({{ completedCount }}/{{ filteredBucketList.length }})
+        </button>
+        <button class="tab-btn" :class="{active: currentTab === 'blog'}" @click="currentTab = 'blog'">
+            <i class="ri-article-line"></i> 博客
+        </button>
+    </nav>
 
-    <section class="section">
-        <div class="section-title">Writings / 随笔</div>
-        <div class="item-list">
-            <a v-for="post in posts" :key="post.title" :href="post.url" class="item-link">
-                <div class="item-title">
-                    {{ post.title }}
-                    <span style="font-size: 12px; color: #999; font-weight: normal;">{{ post.date }}</span>
-                </div>
-            </a>
+    <div class="content-section" :class="{active: currentTab === 'resources'}">
+        <div class="resource-grid">
+            <div v-for="item in resources" :key="item.title" class="resource-card" @click="openResource(item)">
+                <span v-if="item.type === 'app'" class="app-badge">APP</span>
+                
+                <i :class="item.icon" class="res-icon" :style="{color: item.color}"></i>
+                <span class="res-title">{{ item.title }}</span>
+                <span class="res-desc">{{ item.desc }}</span>
+                <span class="tag-badge">{{ item.for }}</span>
+            </div>
         </div>
-    </section>
+    </div>
 
-    <footer class="footer">
-        © {{ new Date().getFullYear() }} {{ profile.name }}. All rights reserved.
-    </footer>
+    <div class="content-section" :class="{active: currentTab === 'bucketlist'}">
+        <div class="filter-bar">
+            <span class="filter-chip" :class="{active: currentAgeFilter === 'all'}" @click="currentAgeFilter = 'all'">全部</span>
+            <span class="filter-chip" :class="{active: currentAgeFilter === '3-6'}" @click="currentAgeFilter = '3-6'">🐣 3-6岁 (幼儿园)</span>
+            <span class="filter-chip" :class="{active: currentAgeFilter === '6-10'}" @click="currentAgeFilter = '6-10'">🎒 6-10岁 (小学低)</span>
+            <span class="filter-chip" :class="{active: currentAgeFilter === '10+'}" @click="currentAgeFilter = '10+'">🔭 10岁+ (探索)</span>
+        </div>
+
+        <div class="achievement-grid">
+            <div v-for="task in filteredBucketList" :key="task.id" class="achievement-card" :class="{done: task.done, locked: !task.done}">
+                <div class="check-box"><i class="ri-check-line" v-if="task.done"></i></div>
+                <div class="task-content">
+                    <div class="task-title">{{ task.title }}</div>
+                    <div class="task-meta">
+                        <span>{{ task.age }}岁</span>
+                        <span v-if="task.date">• {{ task.date }}</span>
+                        <span v-for="t in task.tags" style="color:#aaa;">#{{t}}</span>
+                    </div>
+                    <a v-if="task.done && task.link" :href="task.link" class="memory-link" target="_blank"><i class="ri-link"></i> 查看记录</a>
+                </div>
+            </div>
+        </div>
+        <div v-if="filteredBucketList.length === 0" style="text-align:center; padding:40px; color:#999;">在这个阶段还没有添加任务...</div>
+    </div>
+
+    <div class="content-section" :class="{active: currentTab === 'blog'}">
+        <a v-for="post in posts" :key="post.title" href="#" class="post-card">
+            <span class="post-title">{{ post.title }}</span>
+            <span class="post-meta">{{ post.date }} • {{ post.tag }}</span>
+            <p class="post-summary">{{ post.summary }}</p>
+        </a>
+    </div>
+
+    <div class="app-modal" v-if="runningAppUrl">
+        <div class="app-header">
+            <span style="font-weight:700;">正在运行工具...</span>
+            <button class="close-app-btn" @click="closeApp"><i class="ri-close-line"></i></button>
+        </div>
+        <iframe :src="runningAppUrl" class="app-iframe"></iframe>
+    </div>
+
 </div>
 
 <script>
     new Vue({
         el: '#app',
         data: {
-            // ---在此处修改您的个人信息---
-            profile: {
-                name: "Your Name",
-                // 建议使用 200x200 的正方形图片
-                avatarUrl: "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff&size=128", 
-                bio: "软件架构师 / 独立开发者 / 终身学习者\n这里是我记录想法和分享作品的地方。"
-            },
+            currentTab: 'resources',
+            currentAgeFilter: 'all',
+            runningAppUrl: null, // 当前正在运行的工具URL
             
-            // ---社交链接 (使用 RemixIcon 类名)---
-            socialLinks: [
-                { name: 'Twitter', url: 'https://twitter.com', iconClass: 'ri-twitter-x-line' },
-                { name: 'GitHub', url: 'https://github.com', iconClass: 'ri-github-line' },
-                { name: 'Email', url: 'mailto:your@email.com', iconClass: 'ri-mail-line' }
+            // --- 资源库数据 ---
+            resources: [
+                { 
+                    title: "认识时间 (TimeFlow)", 
+                    desc: "现代交互式时钟教学工具", 
+                    icon: "ri-time-line", 
+                    color: "#f59e0b", 
+                    // 重点修改：指向本地文件，类型标记为 app
+                    url: "./clock.html", 
+                    type: "app", 
+                    for: "妹妹用" 
+                },
+                { title: "太阳系漫游", desc: "3D 太阳系模型演示 (示例)", icon: "ri-planet-line", color: "#3b82f6", url: "https://solarsystem.nasa.gov/", type: "link", for: "通用" },
+                { title: "物理模拟器", desc: "力与运动 (示例)", icon: "ri-flask-line", color: "#ef4444", url: "#", type: "link", for: "哥哥用" },
+                { title: "手抄报模板", desc: "高清素材下载", icon: "ri-printer-line", color: "#10b981", url: "#", type: "link", for: "通用" },
+                { title: "Scratch入门", desc: "编程第一课", icon: "ri-code-s-slash-line", color: "#8b5cf6", url: "#", type: "link", for: "哥哥用" },
             ],
 
-            // ---项目列表---
-            projects: [
-                { 
-                    title: "公共安全态势感知平台", 
-                    desc: "基于 Vue 和 WebGL 的大数据可视化指挥系统", 
-                    url: "#" 
-                },
-                { 
-                    title: "Forestry Command", 
-                    desc: "林业局指挥调度大屏系统设计", 
-                    url: "#" 
-                },
-                { 
-                    title: "Kids Education Audio", 
-                    desc: "给孩子们的商业与科学启蒙音频内容", 
-                    url: "#" 
-                }
+            // --- 陪伴清单数据 ---
+            bucketList: [
+                { id: 1, title: "一起在雨中踩水坑", age: "3-6", done: true, date: "2023-06-01", link: "#", tags: ["自然"] },
+                { id: 2, title: "去动物园认识长颈鹿", age: "3-6", done: true, date: "2023-08-15", link: "#", tags: ["旅行"] },
+                { id: 3, title: "学会骑两轮自行车", age: "3-6", done: false, date: "", link: "", tags: ["技能"] },
+                { id: 4, title: "一起种一棵植物并观察发芽", age: "3-6", done: false, date: "", link: "", tags: ["自然"] },
+                { id: 5, title: "第一次露营过夜", age: "6-10", done: true, date: "2024-10-01", link: "#", tags: ["探险"] },
+                { id: 6, title: "做一次化学实验(火山爆发)", age: "6-10", done: false, date: "", link: "", tags: ["科学"] },
+                { id: 7, title: "参观自然博物馆", age: "6-10", done: false, date: "", link: "", tags: ["知识"] },
+                { id: 8, title: "一起组装一台电脑", age: "10+", done: false, date: "", link: "", tags: ["科技"] },
+                { id: 9, title: "解释什么是股票和利息", age: "10+", done: false, date: "", link: "", tags: ["财商"] },
             ],
 
-            // ---文章列表---
+            // --- 博客数据 ---
             posts: [
-                { title: "如何向孩子解释什么是商业模式？", date: "2025-12-03", url: "#" },
-                { title: "Vue 2 在 2025 年的实战应用", date: "2025-11-20", url: "#" },
-                { title: "关于极简主义设计的思考", date: "2025-01-15", url: "#" }
+                { title: "如何用乐高解释模块化编程思维？", date: "2025-12-05", tag: "编程思维", summary: "通过搭建城堡的过程，让孩子理解函数封装和复用的概念..." },
+                { title: "给女儿的物理启蒙：为什么天空是蓝的", date: "2025-11-20", tag: "物理", summary: "用三棱镜和牛奶水做的家庭小实验记录。" },
+                { title: "哥哥的手抄报排版技巧总结", date: "2025-10-01", tag: "美育", summary: "留白、主色调、标题设计，这些设计原则其实和做PPT一样。" }
             ]
+        },
+        computed: {
+            filteredBucketList() {
+                if (this.currentAgeFilter === 'all') return this.bucketList;
+                return this.bucketList.filter(item => item.age === this.currentAgeFilter);
+            },
+            completedCount() {
+                return this.filteredBucketList.filter(t => t.done).length;
+            }
+        },
+        methods: {
+            // 打开资源的逻辑
+            openResource(item) {
+                if (item.type === 'app') {
+                    // 如果是内部工具，在弹窗中打开
+                    this.runningAppUrl = item.url;
+                } else {
+                    // 否则新窗口打开链接
+                    window.open(item.url, '_blank');
+                }
+            },
+            closeApp() {
+                this.runningAppUrl = null;
+            }
         }
     })
 </script>
