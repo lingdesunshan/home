@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TimeFlow | 终极版</title>
+    <script src="https://lib.baomitu.com/vue/2.6.14/vue.min.js"></script>
+    <link href="https://lib.baomitu.com/remixicon/3.5.0/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* 配色方案 */
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --clock-face: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #95a5a6;
+            --hand-hour: #2c3e50;
+            --hand-minute: #ff6b6b;
+            --primary: #54a0ff;
+            --success: #1dd1a1;
+            --danger: #ff6b6b;
+            --warning: #feca57;
+            
+            --shadow-soft: 0 10px 30px rgba(0,0,0,0.08);
+            --shadow-deep: 0 20px 50px rgba(0,0,0,0.15);
+            --hand-shadow: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: var(--bg-gradient);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none; /* 禁止移动端默认滚动 */
+        }
+
+        #app {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* --- 顶部栏 --- */
+        .top-bar {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        .brand { font-size: 18px; font-weight: 700; color: var(--text-main); opacity: 0.8; letter-spacing: 1px; }
+        .switch-pill {
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px; border-radius: 30px;
+            font-size: 14px; font-weight: 700; color: var(--text-main);
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .switch-pill:active { transform: scale(0.95); }
+
+        /* --- 时钟区域 (加大版) --- */
+        .clock-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 100%;
+            /* 预留一点上下空间防止太满 */
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .clock-wrapper {
+            /* 尺寸加大：从 90vmin 增加到 95vmin，max-width 增加到 650px */
+            width: 95vmin;
+            height: 95vmin;
+            max-width: 650px;
+            max-height: 650px;
+            position: relative;
+            filter: var(--shadow-deep);
+            cursor: grab;
+            transition: transform 0.1s;
+        }
+        .clock-wrapper:active { cursor: grabbing; transform: scale(0.99); }
+
+        .face-bg { fill: var(--clock-face); }
+        .tick-mark { stroke-linecap: round; }
+        .tick-major { stroke: #e0e0e0; stroke-width: 3; }
+        .tick-minor { stroke: #f0f0f0; stroke-width: 1; }
+        
+        .num-main { font-size: 32px; fill: var(--text-main); font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
+        .num-helper { font-size: 14px; fill: var(--text-sub); font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+
+        .hand { stroke-linecap: round; filter: var(--hand-shadow); pointer-events: none; }
+        .hand-hour { stroke: var(--hand-hour); stroke-width: 16; }
+        .hand-minute { stroke: var(--hand-minute); stroke-width: 8; }
+        .center-dot-outer { fill: var(--hand-hour); }
+        .center-dot-inner { fill: #fff; }
+
+        /* --- 底部控制坞 --- */
+        .dock-container {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+            display: flex; justify-content: center; pointer-events: none;
+        }
+        .dock {
+            pointer-events: auto;
+            width: 90%; max-width: 500px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px; padding: 20px;
+            box-shadow: var(--shadow-soft);
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+            border: 1px solid rgba(255,255,255,0.5);
+            margin-bottom: 20px;
+        }
+        .digital-card {
+            background: #f1f3f5; padding: 10px 24px; border-radius: 16px;
+            display: flex; align-items: baseline; gap: 8px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .time-text { font-size: 48px; font-weight: 700; color: var(--text-main); font-feature-settings: "tnum"; line-height: 1; }
+        .ampm-text { font-size: 16px; color: var(--text-sub); font-weight: 600; }
+        .quiz-info { text-align: center; }
+        .quiz-title { font-size: 14px; color: var(--text-sub); margin-bottom: 4px; }
+        .quiz-target { font-size: 32px; color: var(--hand-minute); font-weight: 700; }
+        .quiz-level-badge { font-size: 12px; background: #eee; color: #666; padding: 2px 8px; border-radius: 10px; margin-top: 4px; display: inline-block;}
+        .controls { display: flex; gap: 12px; width: 100%; }
+        .btn {
+            flex: 1; border: none; height: 56px; border-radius: 16px;
+            font-size: 16px; font-weight: 700; font-family: inherit;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: var(--primary); }
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+        .btn-ghost { background: #e0e6ed; color: var(--text-main); box-shadow: none; }
+
+        /* --- 弹窗与难度卡片 --- */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; animation: fadeIn 0.2s;
+        }
+        .modal {
+            background: white; padding: 32px; border-radius: 24px;
+            text-align: center; width: 85%; max-width: 340px;
+            box-shadow: var(--shadow-deep);
+            animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+        @keyframes scaleUp { from {transform:scale(0.8); opacity:0} to {transform:scale(1); opacity:1} }
+        .level-grid { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 16px; }
+        .level-card {
+            background: #f8f9fa; border: 2px solid transparent;
+            padding: 16px; border-radius: 16px;
+            cursor: pointer; text-align: left;
+            display: flex; align-items: center; gap: 16px;
+            transition: all 0.2s;
+        }
+        .level-card:hover { background: #fff; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .level-icon { font-size: 24px; width: 48px; height: 48px; background: #e3f2fd; color: var(--primary); border-radius: 12px; display: flex; justify-content: center; align-items: center; }
+        .level-info h3 { margin: 0; font-size: 16px; color: var(--text-main); }
+        .level-info p { margin: 4px 0 0; font-size: 12px; color: var(--text-sub); }
+
+        text { pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="top-bar">
+        <div class="brand" v-if="!quizMode">TimeFlow</div>
+        <div class="switch-pill" v-if="quizMode" style="background: #fff5f5; color: var(--danger);">
+            <i class="ri-flag-fill"></i> {{ quizCurrent }}/10
+        </div>
+        <div class="switch-pill" v-if="!quizMode" @click="toggleFormat">
+            <span>{{ is24Hour ? '24H' : '12H' }}</span>
+            <i class="ri-arrow-left-right-line" style="font-size:12px; opacity:0.5"></i>
+        </div>
+    </div>
+
+    <div class="clock-container">
+        <div class="clock-wrapper" ref="clockRef"
+             @mousedown="startDrag"
+             @touchstart.prevent="startDrag">
+            
+            <svg viewBox="0 0 500 500" width="100%" height="100%">
+                <circle cx="250" cy="250" r="210" class="face-bg" />
+                <g v-if="true">
+                    <text v-for="n in 12" 
+                          :x="250 + 235 * Math.sin(n * 30 * Math.PI / 180)" 
+                          :y="250 - 235 * Math.cos(n * 30 * Math.PI / 180)" 
+                          class="num-helper">{{ n * 5 }}</text>
+                </g>
+                <g v-for="i in 60">
+                    <line :x1="250" :y1="60" :x2="250" :y2="i % 5 === 0 ? 75 : 65" 
+                          :transform="`rotate(${i * 6}, 250, 250)`" 
+                          :class="i % 5 === 0 ? 'tick-major' : 'tick-minor'" 
+                          class="tick-mark" />
+                </g>
+                <text v-for="n in 12" 
+                      :x="250 + 155 * Math.sin(n * 30 * Math.PI / 180)" 
+                      :y="250 - 155 * Math.cos(n * 30 * Math.PI / 180)" 
+                      class="num-main">{{ n }}</text>
+                <line x1="250" y1="250" x2="250" y2="140" class="hand hand-hour" :transform="`rotate(${hourDegrees}, 250, 250)`" />
+                <line x1="250" y1="250" x2="250" y2="80" class="hand hand-minute" :transform="`rotate(${minuteDegrees}, 250, 250)`" />
+                <circle cx="250" cy="250" r="14" class="center-dot-outer" />
+                <circle cx="250" cy="250" r="6" class="center-dot-inner" />
+            </svg>
+        </div>
+    </div>
+
+    <div class="dock-container">
+        <div class="dock">
+            <template v-if="!quizMode">
+                <div class="digital-card">
+                    <span class="time-text">{{ timeString }}</span>
+                    <span class="ampm-text" v-if="!is24Hour">{{ isPM ? 'PM' : 'AM' }}</span>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-ghost" @click="setNow"><i class="ri-time-line"></i> 现在</button>
+                    <button class="btn btn-primary" @click="showLevelSelect = true"><i class="ri-gamepad-line"></i> 挑战</button>
+                </div>
+            </template>
+            <template v-else>
+                <div class="quiz-info">
+                    <div class="quiz-level-badge">{{ difficulty === 1 ? '🍰 蛋糕模式' : '🚀 忍者模式' }}</div>
+                    <div class="quiz-title">请将时钟拨到</div>
+                    <div class="quiz-target">{{ targetTimeString }}</div>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-ghost" @click="quitQuiz" style="flex: 0.5; color: #999;"><i class="ri-close-line"></i></button>
+                    <button class="btn btn-success" @click="checkAnswer"><i class="ri-check-line"></i> 我拨好了</button>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <div class="modal-overlay" v-if="showLevelSelect" @click="showLevelSelect = false">
+        <div class="modal" @click.stop>
+            <div style="font-size: 20px; font-weight: 700; color: var(--text-main);">选择挑战难度</div>
+            <div style="font-size: 14px; color: var(--text-sub); margin-bottom: 20px;">给孩子选一个合适的起步吧</div>
+            <div class="level-grid">
+                <div class="level-card" @click="startQuiz(1)">
+                    <div class="level-icon" style="background: #fff3cd; color: #ffc107;">🍰</div>
+                    <div class="level-info"><h3>蛋糕模式 (入门)</h3><p>0分, 15分, 30分, 45分</p></div>
+                </div>
+                <div class="level-card" @click="startQuiz(2)">
+                    <div class="level-icon" style="background: #e3f2fd; color: #2196f3;">🚀</div>
+                    <div class="level-info"><h3>忍者模式 (精确)</h3><p>0-59分 (任意时间)</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" v-if="feedback.show" @click="closeFeedback">
+        <div class="modal" @click.stop>
+            <div style="font-size: 64px; margin-bottom: 16px;">{{ feedback.icon }}</div>
+            <div style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">{{ feedback.title }}</div>
+            <div style="color: var(--text-sub); margin-bottom: 24px;">{{ feedback.sub }}</div>
+            <button class="btn btn-primary" style="width:100%" @click="closeFeedback">{{ feedback.btnText }}</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            totalMinutes: 600,
+            isDragging: false,
+            is24Hour: false,
+            showLevelSelect: false,
+            difficulty: 1,
+            quizMode: false,
+            quizCurrent: 1,
+            targetTime: { h: 14, m: 30 },
+            feedback: { show: false, icon: '', title: '', sub:'', btnText:'', finished: false }
+        },
+        computed: {
+            hourDegrees() { return this.totalMinutes * 0.5; },
+            minuteDegrees() { return this.totalMinutes * 6; },
+            displayHour() { return (Math.floor(this.totalMinutes / 60) % 24 + 24) % 24; },
+            displayMinute() { return Math.floor(Math.abs(this.totalMinutes) % 60); },
+            isPM() { return this.displayHour >= 12; },
+            timeString() { return this.formatTime(this.displayHour, this.displayMinute, false); },
+            targetTimeString() { return this.formatTime(this.targetTime.h, this.targetTime.m, true); }
+        },
+        methods: {
+            formatTime(h, m, showSuffix) {
+                let showH = h;
+                let suffix = '';
+                if (!this.is24Hour) {
+                    suffix = h >= 12 ? ' PM' : ' AM';
+                    showH = h % 12;
+                    if (showH === 0) showH = 12;
+                } else {
+                    if (showH < 10) showH = '0' + showH;
+                }
+                let showM = m < 10 ? '0' + m : m;
+                return showSuffix ? `${showH}:${showM}${this.is24Hour ? '' : suffix}` : `${showH}:${showM}`;
+            },
+            toggleFormat() { this.is24Hour = !this.is24Hour; },
+            setNow() { const d = new Date(); this.totalMinutes = d.getHours() * 60 + d.getMinutes(); },
+            
+            // --- 核心修复：全局拖拽监听 ---
+            startDrag(e) {
+                this.isDragging = true;
+                // 添加到 window，这样鼠标移出 clock-wrapper 也能响应
+                window.addEventListener('mousemove', this.onDrag);
+                window.addEventListener('mouseup', this.stopDrag);
+                window.addEventListener('touchmove', this.onDrag, { passive: false });
+                window.addEventListener('touchend', this.stopDrag);
+                
+                // 立即触发一次更新
+                this.updateDrag(e);
+            },
+            stopDrag() {
+                this.isDragging = false;
+                // 移除监听
+                window.removeEventListener('mousemove', this.onDrag);
+                window.removeEventListener('mouseup', this.stopDrag);
+                window.removeEventListener('touchmove', this.onDrag);
+                window.removeEventListener('touchend', this.stopDrag);
+            },
+            onDrag(e) {
+                if(!this.isDragging) return;
+                this.updateDrag(e);
+            },
+            updateDrag(e) {
+                // 这里我们要用 $refs 拿到钟表的 DOM，因为 e.target 可能是 window
+                const svg = this.$refs.clockRef.querySelector('svg');
+                if(!svg) return;
+
+                const pt = svg.createSVGPoint();
+                pt.x = e.touches ? e.touches[0].clientX : e.clientX;
+                pt.y = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                // 即使鼠标在屏幕外，这个变换依然是相对于 SVG 中心的，数学上完全正确
+                const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+                const dx = svgP.x - 250;
+                const dy = svgP.y - 250;
+                
+                let angleDeg = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+                if (angleDeg < 0) angleDeg += 360;
+                const minutesOnFace = angleDeg / 6;
+
+                // 安全取模算法
+                const currentMod = (this.totalMinutes % 60 + 60) % 60;
+                let diff = minutesOnFace - currentMod;
+                if (diff > 30) diff -= 60;
+                if (diff < -30) diff += 60;
+                this.totalMinutes += diff;
+            },
+
+            startQuiz(level) {
+                this.difficulty = level;
+                this.showLevelSelect = false;
+                this.quizMode = true;
+                this.quizCurrent = 1;
+                this.nextQuestion();
+            },
+            quitQuiz() { this.quizMode = false; },
+            nextQuestion() {
+                const h = Math.floor(Math.random() * 24);
+                let m;
+                if (this.difficulty === 1) {
+                    const quarters = [0, 15, 30, 45];
+                    m = quarters[Math.floor(Math.random() * quarters.length)];
+                } else {
+                    m = Math.floor(Math.random() * 60);
+                }
+                this.targetTime = { h, m };
+                this.totalMinutes = Math.floor(Math.random() * 720);
+            },
+            checkAnswer() {
+                let currentTotal = this.displayHour * 60 + this.displayMinute;
+                let targetTotal = this.targetTime.h * 60 + this.targetTime.m;
+                let diff = Math.abs((currentTotal % 720) - (targetTotal % 720));
+                if (diff > 700) diff = 720 - diff;
+                
+                let tolerance = this.difficulty === 1 ? 2 : 1;
+
+                if (diff <= tolerance) {
+                    if (this.quizCurrent >= 10) {
+                        this.showFeedback('🏆', '太棒了！', '恭喜你完成了所有挑战！', '重新开始', true);
+                    } else {
+                        this.showFeedback('🌟', '回答正确', '保持这个节奏，继续！', '下一题', false);
+                    }
+                } else {
+                    this.showFeedback('🤔', '有点小误差', '再仔细看看指针位置？', '再试一次', false);
+                }
+            },
+            showFeedback(icon, title, sub, btnText, finished) {
+                this.feedback = { show: true, icon, title, sub, btnText, finished };
+            },
+            closeFeedback() {
+                this.feedback.show = false;
+                if (this.feedback.title.includes('误差')) return;
+                if (this.feedback.finished) {
+                    this.quizMode = false;
+                } else {
+                    this.quizCurrent++;
+                    this.nextQuestion();
+                }
+            }
+        }
+    })
+</script>
+
+</body>
+</html>
